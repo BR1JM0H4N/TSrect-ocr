@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Check and unzip tocGen.zip
-        and: |
+        run: |
           if [ ! -f main.zip ]; then
             echo "❌ main.zip not found."
             exit 1
@@ -27,7 +27,7 @@ jobs:
           unzip -o main.zip -d temp
           rm main.zip
 
-      - name: Clean name except temp, .git, and .github
+      - name: Clean everything except temp, .git, and .github
         run: |
           shopt -s dotglob
           for f in * .*; do
