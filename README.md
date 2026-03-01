@@ -23,6 +23,7 @@
 - 📄 PDF.js for PDF rendering
 - 🎨 Modern responsive UI (Light/Dark mode)
 - ⚡ Progressive processing (results appear instantly per page)
+- 📲 Progressive Web App (PWA) support with offline caching
 
 It allows you to upload multiple images or PDFs, extract text in English, Hindi, or both, and download results individually or combined.
 
@@ -47,6 +48,7 @@ Everything runs directly in your browser 🔐
 - 🛑 Stop OCR mid-process
 - 🌗 Auto light/dark mode
 - 📱 Fully responsive design
+- 📦 Installable on desktop/mobile as a PWA
 
 ---
 
