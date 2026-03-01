@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Bulk OCR Extractor (English + Hindi)</title>
+<meta name="theme-color" content="#4f46e5" />
+<meta name="description" content="Bulk OCR Extractor for images and PDFs with English and Hindi support." />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
 <script src="./vendor/tesseract/tesseract.min.js"></script>
 <script src="./vendor/pdfjs/pdf.min.js" type="module"></script>
 <style>
@@ -620,6 +624,16 @@ const cleanLabel = picked.label.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g,
 downloadText(`ocr-output-${cleanLabel || 'item'}`, picked.text.trim());
 setStatus(`Downloaded text for: ${picked.label}`, true);
 });
+
+if ('serviceWorker' in navigator) {
+window.addEventListener('load', async () => {
+try {
+await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
+} catch (error) {
+console.warn('Service worker registration failed:', error);
+}
+});
+}
 </script>
 </body>
 </html>
