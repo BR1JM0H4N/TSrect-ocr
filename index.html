@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bulk OCR Extractor (English + Hindi)</title>
+<script src="./vendor/tesseract/tesseract.min.js"></script>
+<script src="./vendor/pdfjs/pdf.min.js" type="module"></script>
+<style>
+:root {
+color-scheme: light dark;
+--bg: #f3f6fd;
+--card: #ffffff;
+--text: #1e293b;
+--muted: #64748b;
+--border: #dbe4f5;
+--accent: #4f46e5;
+--accent-soft: #e0e7ff;
+--success: #16a34a;
+--danger: #dc2626;
+--danger-soft: #fee2e2;
+--shadow: 0 20px 50px rgba(79, 70, 229, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+:root {
+--bg: #020817;
+--card: #0f172a;
+--text: #e2e8f0;
+--muted: #94a3b8;
+--border: #213151;
+--accent: #818cf8;
+--accent-soft: #1f2955;
+--success: #4ade80;
+--danger: #f87171;
+--danger-soft: #3c1f2a;
+--shadow: 0 22px 60px rgba(0, 0, 0, 0.45);
+}
+}
+
+* { box-sizing: border-box;
+}
+
+body {
+margin: 0;
+font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.16), transparent 40%), var(--bg);
+color: var(--text);
+min-height: 100vh;
+padding: 24px;
+}
+
+.app {
+width: min(1080px, 100%);
+margin: 0 auto;
+background: color-mix(in oklab, var(--card), transparent 3%);
+border: 1px solid var(--border);
+border-radius: 20px;
+box-shadow: var(--shadow);
+overflow: hidden;
+}
+
+.top {
+padding: 24px;
+border-bottom: 1px solid var(--border);
+background: color-mix(in oklab, var(--card), var(--accent) 4%);
+}
+
+h1 {
+margin: 0 0 8px;
+font-size: clamp(1.35rem, 2vw, 2rem);
+}
+
+.subtitle {
+color: var(--muted);
+margin-bottom: 18px;
+line-height: 1.4;
+max-width: 920px;
+}
+
+.controls {
+display: grid;
+gap: 12px;
+margin-bottom: 12px;
+}
+
+.panel-grid {
+display: grid;
+grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
+min-height: 55vh;
+}
+
+.sidebar {
+border-right: 1px solid var(--border);
+padding: 18px;
+background: color-mix(in oklab, var(--card), transparent 3%);
+}
+
+.results {
+padding: 18px;
+display: grid;
+gap: 14px;
+align-content: start;
+max-height: 70vh;
+overflow: auto;
+}
+
+input[type="file"], select {
+border: 1px solid var(--border);
+border-radius: 12px;
+padding: 11px 12px;
+background: transparent;
+width: 100%;
+color: var(--text);
+}
+
+.field {
+display: grid;
+gap: 6px;
+}
+
+.field label {
+font-size: 0.88rem;
+color: var(--muted);
+font-weight: 600;
+}
+
+.buttons {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+}
+
+button {
+border: 1px solid transparent;
+padding: 10px 14px;
+border-radius: 10px;
+font-weight: 600;
+cursor: pointer;
+transition: 0.2s ease;
+font-size: 0.9rem;
+}
+
+button:disabled {
+cursor: not-allowed;
+opacity: 0.55;
+}
+
+#extractBtn {
+background: var(--accent);
+color: white;
+}
+
+#stopBtn {
+background: var(--danger-soft);
+color: var(--danger);
+border-color: color-mix(in oklab, var(--danger), transparent 60%);
+}
+
+#saveBtn, #saveSingleBtn {
+background: var(--accent-soft);
+color: var(--accent);
+border-color: color-mix(in oklab, var(--accent), transparent 60%);
+}
+
+.status {
+margin: 10px 0 8px;
+font-size: 0.92rem;
+color: var(--muted);
+min-height: 22px;
+white-space: pre-wrap;
+}
+
+.ok { color: var(--success);
+}
+
+.progress-wrap {
+width: 100%;
+height: 12px;
+border-radius: 999px;
+background: color-mix(in oklab, var(--border), transparent 20%);
+overflow: hidden;
+margin-bottom: 8px;
+}
+
+.progress-bar {
+width: 0%;
+height: 100%;
+background: linear-gradient(90deg, var(--accent), #60a5fa);
+transition: width 0.25s ease;
+}
+
+.summary-card {
+border: 1px solid var(--border);
+border-radius: 12px;
+padding: 12px;
+font-size: 0.9rem;
+background: color-mix(in oklab, var(--card), var(--accent) 1%);
+margin-bottom: 10px;
+}
+
+.summary-card strong { display: block;
+margin-bottom: 4px;
+}
+
+.summary-card span { color: var(--muted);
+}
+
+.result-card {
+border: 1px solid var(--border);
+border-radius: 14px;
+padding: 12px;
+background: color-mix(in oklab, var(--card), transparent 2%);
+display: grid;
+gap: 10px;
+}
+
+.result-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+flex-wrap: wrap;
+font-size: 0.9rem;
+}
+
+.badge {
+font-weight: 700;
+font-size: 0.78rem;
+color: var(--accent);
+background: var(--accent-soft);
+padding: 4px 8px;
+border-radius: 999px;
+}
+
+.preview {
+width: min(100%, 520px);
+border-radius: 10px;
+border: 1px solid var(--border);
+background: #111;
+}
+
+.card-text {
+margin: 0;
+border: 1px solid var(--border);
+border-radius: 10px;
+padding: 10px;
+background: color-mix(in oklab, var(--card), transparent 1%);
+font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+font-size: 0.87rem;
+white-space: pre-wrap;
+max-height: 250px;
+overflow: auto;
+}
+
+.placeholder {
+border: 1px dashed var(--border);
+border-radius: 14px;
+padding: 18px;
+color: var(--muted);
+text-align: center;
+}
+
+@media (max-width: 950px) {
+.panel-grid {
+grid-template-columns: 1fr;
+}
+.sidebar {
+border-right: none;
+border-bottom: 1px solid var(--border);
+}
+.results {
+max-height: none;
+}
+}
+</style>
+</head>
+<body>
+<main class="app">
+<section class="top">
+<h1>Bulk OCR Extractor vi (Tesseract.js)</h1>
+<div class="subtitle">
+Upload multiple images or PDFs and get OCR output progressively. As soon as each page/image is done, its preview and extracted text appear below.
+</div>
+
+<section class="controls">
+<input id="fileInput" type="file" multiple accept="image/*,.pdf,application/pdf" />
+<div class="field">
+<label for="languageSelect">OCR Language</label>
+<select id="languageSelect" aria-label="Select OCR language">
+<option value="eng">English</option>
+<option value="hin">Hindi</option>
+<option value="eng+hin" selected>Multi-language (English + Hindi)</option>
+</select>
+</div>
+<div class="buttons">
+<button id="extractBtn">Start OCR</button>
+<button id="stopBtn" disabled>Stop OCR</button>
+<button id="saveSingleBtn" disabled>Download Selected Page Text</button>
+<button id="saveBtn" disabled>Download Full Text</button>
+</div>
+</section>
+
+<div id="status" class="status">
+Select one or more files, then click “Start OCR”.
+</div>
+<div class="progress-wrap" aria-label="OCR progress">
+<div id="progressBar" class="progress-bar"></div>
+</div>
+</section>
+
+<section class="panel-grid">
+<aside class="sidebar">
+<div class="summary-card">
+<strong>Live OCR Summary</strong>
+<span id="summaryText">No OCR run yet.</span>
+</div>
+<div class="field">
+<label for="pageSelect">Choose page/image result</label>
+<select id="pageSelect" disabled>
+<option value="">No pages yet</option>
+</select>
+</div>
+<div class="field">
+<label for="outputText">Combined text (all processed items)</label>
+<textarea id="outputText" placeholder="Final merged OCR text appears here..." spellcheck="false" readonly></textarea>
+</div>
+</aside>
+
+<section id="resultsContainer" class="results">
+<div class="placeholder">
+Processed pages/images will appear here one-by-one.
+</div>
+</section>
+</section>
+</main>
+
+<script type="module">
+const OCR_ASSET_PATHS = {
+workerPath: './vendor/tesseract/worker.min.js',
+corePath: './vendor/tesseract/tesseract-core-simd.wasm.js',
+langPath: './tessdata'
+};
+
+import * as pdfjsLib from './vendor/pdfjs/pdf.min.js';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdfjs/pdf.worker.min.js';
+
+const fileInput = document.getElementById('fileInput');
+const extractBtn = document.getElementById('extractBtn');
+const stopBtn = document.getElementById('stopBtn');
+const saveBtn = document.getElementById('saveBtn');
+const saveSingleBtn = document.getElementById('saveSingleBtn');
+const outputText = document.getElementById('outputText');
+const statusEl = document.getElementById('status');
+const progressBar = document.getElementById('progressBar');
+const languageSelect = document.getElementById('languageSelect');
+const resultsContainer = document.getElementById('resultsContainer');
+const summaryText = document.getElementById('summaryText');
+const pageSelect = document.getElementById('pageSelect');
+
+let latestResult = '';
+let perUnitResults = [];
+let stopRequested = false;
+
+const isPdf = (file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+const isImage = (file) => file.type.startsWith('image/');
+
+const setStatus = (msg, ok = false) => {
+statusEl.textContent = msg;
+statusEl.classList.toggle('ok', ok);
+};
+
+const setProgress = (value) => {
+progressBar.style.width = `${Math.max(0, Math.min(100, value))}%`;
+};
+
+const resetResultsView = () => {
+resultsContainer.innerHTML = '<div class="placeholder">Processed pages/images will appear here one-by-one.</div>';
+pageSelect.innerHTML = '<option value="">No pages yet</option>';
+pageSelect.disabled = true;
+saveSingleBtn.disabled = true;
+};
+
+const updateSummary = (processed, total, stopped = false) => {
+const suffix = stopped ? ' (Stopped by user)': '';
+summaryText.textContent = `Processed ${processed}/${total} item(s)${suffix}.`;
+};
+
+const appendResultCard = ({ label, text, previewUrl, unitId }) => {
+if (resultsContainer.querySelector('.placeholder')) {
+resultsContainer.innerHTML = '';
+}
+
+const card = document.createElement('article');
+card.className = 'result-card';
+
+const header = document.createElement('div');
+header.className = 'result-header';
+header.innerHTML = `<div><strong>${label}</strong></div><span class="badge">Item ${unitId}</span>`;
+
+const img = document.createElement('img');
+img.className = 'preview';
+img.src = previewUrl;
+img.alt = `Preview of ${label}`;
+img.loading = 'lazy';
+
+const textBlock = document.createElement('pre');
+textBlock.className = 'card-text';
+textBlock.textContent = text.trim() || '[No text detected]';
+
+card.append(header, img, textBlock);
+resultsContainer.append(card);
+card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+};
+
+const recognizeBlob = async (blob, worker, current, total, label) => {
+setStatus(`Processing ${current}/${total} — ${label}`);
+const { data } = await worker.recognize(blob);
+return data.text || '';
+};
+
+const renderPdfPageToBlob = async (page) => {
+const viewport = page.getViewport({ scale: 2.0 });
+const canvas = document.createElement('canvas');
+const context = canvas.getContext('2d', { alpha: false });
+
+canvas.width = Math.floor(viewport.width);
+canvas.height = Math.floor(viewport.height);
+await page.render({ canvasContext: context, viewport }).promise;
+
+return new Promise((resolve, reject) => {
+canvas.toBlob((blob) => {
+if (blob) {
+resolve(blob);
+} else {
+reject(new Error('Unable to convert PDF page to image blob.'));
+}
+}, 'image/png');
+});
+};
+
+const countWorkUnits = async (files) => {
+let total = 0;
+for (const file of files) {
+if (isImage(file)) {
+total += 1;
+} else if (isPdf(file)) {
+const data = new Uint8Array(await file.arrayBuffer());
+const pdf = await pdfjsLib.getDocument({ data }).promise;
+total += pdf.numPages;
+}
+}
+return total;
+};
+
+const addUnitResult = ({ label, text, previewUrl }) => {
+const unitId = perUnitResults.length + 1;
+perUnitResults.push({ unitId, label, text });
+
+const option = document.createElement('option');
+option.value = String(unitId);
+option.textContent = `${unitId}. ${label}`;
+pageSelect.append(option);
+pageSelect.disabled = false;
+saveSingleBtn.disabled = false;
+
+appendResultCard({ label, text, previewUrl, unitId });
+
+latestResult = perUnitResults
+.map((item) => `----- ${item.label} -----\n${item.text.trim()}\n`)
+.join('\n')
+.trim();
+outputText.value = latestResult;
+saveBtn.disabled = !latestResult;
+};
+
+const requestStop = () => {
+stopRequested = true;
+stopBtn.disabled = true;
+setStatus('Stop requested. Finishing current item then stopping...');
+};
+
+stopBtn.addEventListener('click', requestStop);
+
+extractBtn.addEventListener('click', async () => {
+const files = [...fileInput.files];
+if (files.length === 0) {
+setStatus('Please choose at least one image or PDF file.');
+return;
+}
+
+const unsupported = files.filter((f) => !isImage(f) && !isPdf(f));
+if (unsupported.length > 0) {
+setStatus(`Unsupported file(s): ${unsupported.map((f) => f.name).join(', ')}`);
+return;
+}
+
+extractBtn.disabled = true;
+stopBtn.disabled = false;
+saveBtn.disabled = true;
+saveSingleBtn.disabled = true;
+languageSelect.disabled = true;
+pageSelect.disabled = true;
+
+latestResult = '';
+perUnitResults = [];
+stopRequested = false;
+outputText.value = '';
+setProgress(0);
+resetResultsView();
+setStatus('Preparing OCR workload...');
+
+let worker;
+let totalUnits = 0;
+let currentUnit = 0;
+
+try {
+totalUnits = await countWorkUnits(files);
+if (totalUnits === 0) {
+setStatus('No processable pages/images found.');
+extractBtn.disabled = false;
+stopBtn.disabled = true;
+languageSelect.disabled = false;
+return;
+}
+
+updateSummary(0, totalUnits);
+
+const selectedLanguage = languageSelect.value;
+worker = await Tesseract.createWorker(selectedLanguage, 1, OCR_ASSET_PATHS);
+
+for (const file of files) {
+if (stopRequested) break;
+
+if (isImage(file)) {
+currentUnit += 1;
+const txt = await recognizeBlob(file, worker, currentUnit, totalUnits, file.name);
+const previewUrl = URL.createObjectURL(file);
+addUnitResult({ label: `File: ${file.name}`, text: txt, previewUrl });
+setProgress((currentUnit / totalUnits) * 100);
+updateSummary(currentUnit, totalUnits);
+} else if (isPdf(file)) {
+const data = new Uint8Array(await file.arrayBuffer());
+const pdf = await pdfjsLib.getDocument({ data }).promise;
+
+for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+if (stopRequested) break;
+
+const page = await pdf.getPage(pageNumber);
+const pageBlob = await renderPdfPageToBlob(page);
+
+currentUnit += 1;
+const label = `${file.name} | Page ${pageNumber}/${pdf.numPages}`;
+const txt = await recognizeBlob(pageBlob, worker, currentUnit, totalUnits, label);
+const previewUrl = URL.createObjectURL(pageBlob);
+addUnitResult({ label: `File: ${label}`, text: txt, previewUrl });
+setProgress((currentUnit / totalUnits) * 100);
+updateSummary(currentUnit, totalUnits);
+}
+}
+}
+
+if (stopRequested) {
+updateSummary(currentUnit, totalUnits, true);
+setStatus(`OCR stopped. You can download/copy ${currentUnit} processed item(s).`, true);
+} else if (latestResult) {
+setStatus(`Done. Processed ${currentUnit} item(s) using ${languageSelect.options[languageSelect.selectedIndex].text}.`, true);
+} else {
+setStatus('OCR completed but no text was detected.');
+}
+} catch (error) {
+console.error(error);
+setStatus(`OCR failed: ${error?.message || String(error)}`);
+} finally {
+if (worker) {
+await worker.terminate();
+}
+languageSelect.disabled = false;
+extractBtn.disabled = false;
+stopBtn.disabled = true;
+pageSelect.disabled = perUnitResults.length === 0;
+}
+});
+
+const downloadText = (filenamePrefix, text) => {
+const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `${filenamePrefix}-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+a.click();
+URL.revokeObjectURL(url);
+};
+
+saveBtn.addEventListener('click', () => {
+if (!latestResult) {
+setStatus('No OCR text to save yet.');
+return;
+}
+
+downloadText('ocr-output-all', latestResult);
+setStatus('Combined text file downloaded.', true);
+});
+
+saveSingleBtn.addEventListener('click', () => {
+const selectedUnit = Number(pageSelect.value);
+if (!selectedUnit) {
+setStatus('Select a page/image result to download its text.');
+return;
+}
+
+const picked = perUnitResults.find((item) => item.unitId === selectedUnit);
+if (!picked) {
+setStatus('Selected result not found.');
+return;
+}
+
+const cleanLabel = picked.label.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '').toLowerCase();
+downloadText(`ocr-output-${cleanLabel || 'item'}`, picked.text.trim());
+setStatus(`Downloaded text for: ${picked.label}`, true);
+});
+</script>
+</body>
+</html>
