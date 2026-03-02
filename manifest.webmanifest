@@ -1,5 +1,5 @@
 {
-  "name": "Bulk OCR Extractor",
+  "name": "Bulk OCR Extractor v2",
   "short_name": "Bulk OCR",
   "description": "Client-side OCR for images and PDFs with English and Hindi support.",
   "start_url": "./",
