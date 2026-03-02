@@ -41,10 +41,13 @@ Everything runs directly in your browser 🔐
   - Hindi (`hin`)
   - English + Hindi (`eng+hin`)
 - 📊 Live progress bar
+- 🎛 OCR quality modes (Fast / Balanced / Accurate with preprocessing)
 - 📌 Per-page preview & extracted text
 - 📥 Download:
   - Individual page text
   - Combined full text
+  - Searchable PDF for selected page/image (retains original look + text layer)
+  - Digitalized PDF for selected page/image (reconstructs editable text layout)
 - 🛑 Stop OCR mid-process
 - 🌗 Auto light/dark mode
 - 📱 Fully responsive design
@@ -119,7 +122,7 @@ TSrect-ocr/
 ## 🛠 Future Improvements
 
 - 🔍 Text confidence display
-- 🧾 Export as DOCX / PDF
+- 🧾 Export merged searchable + digitalized PDF for all pages
 - 📊 OCR accuracy metrics
 - 🔎 Search inside extracted text
 - 🌍 More language support
