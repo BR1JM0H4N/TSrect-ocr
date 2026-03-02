@@ -9,7 +9,6 @@
 <link rel="manifest" href="./manifest.webmanifest" />
 <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
 <script src="./vendor/tesseract/tesseract.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
 <script src="./vendor/pdfjs/pdf.min.js" type="module"></script>
 <style>
 :root {
@@ -312,7 +311,6 @@ Upload multiple images or PDFs and get OCR output progressively. As soon as each
 <button id="saveSingleBtn" disabled>Download Selected Page Text</button>
 <button id="saveBtn" disabled>Download Full Text</button>
 <button id="saveSinglePdfBtn" disabled>Download Selected Searchable PDF</button>
-<button id="saveDigitalPdfBtn" disabled>Download Selected Digitalized PDF</button>
 </div>
 </section>
 
@@ -367,7 +365,6 @@ const stopBtn = document.getElementById('stopBtn');
 const saveBtn = document.getElementById('saveBtn');
 const saveSingleBtn = document.getElementById('saveSingleBtn');
 const saveSinglePdfBtn = document.getElementById('saveSinglePdfBtn');
-const saveDigitalPdfBtn = document.getElementById('saveDigitalPdfBtn');
 const outputText = document.getElementById('outputText');
 const statusEl = document.getElementById('status');
 const progressBar = document.getElementById('progressBar');
@@ -405,7 +402,6 @@ pageSelect.innerHTML = '<option value="">No pages yet</option>';
 pageSelect.disabled = true;
 saveSingleBtn.disabled = true;
 saveSinglePdfBtn.disabled = true;
-saveDigitalPdfBtn.disabled = true;
 };
 
 const updateSummary = (processed, total, stopped = false) => {
@@ -445,10 +441,7 @@ setStatus(`Processing ${current}/${total} — ${label}`);
 const { data } = await worker.recognize(blob, {}, { text: true, pdf: true });
 return {
 text: data.text || '',
-pdf: data.pdf,
-lines: data.lines || [],
-sourceWidth: data.width || null,
-sourceHeight: data.height || null
+pdf: data.pdf
 };
 };
 
@@ -526,9 +519,9 @@ total += pdf.numPages;
 return total;
 };
 
-const addUnitResult = ({ label, text, previewUrl, searchablePdf, digitalLayout }) => {
+const addUnitResult = ({ label, text, previewUrl, searchablePdf }) => {
 const unitId = perUnitResults.length + 1;
-perUnitResults.push({ unitId, label, text, searchablePdf, digitalLayout });
+perUnitResults.push({ unitId, label, text, searchablePdf });
 
 const option = document.createElement('option');
 option.value = String(unitId);
@@ -537,7 +530,6 @@ pageSelect.append(option);
 pageSelect.disabled = false;
 saveSingleBtn.disabled = false;
 saveSinglePdfBtn.disabled = false;
-saveDigitalPdfBtn.disabled = false;
 
 appendResultCard({ label, text, previewUrl, unitId });
 
@@ -575,7 +567,6 @@ stopBtn.disabled = false;
 saveBtn.disabled = true;
 saveSingleBtn.disabled = true;
 saveSinglePdfBtn.disabled = true;
-saveDigitalPdfBtn.disabled = true;
 languageSelect.disabled = true;
 qualitySelect.disabled = true;
 pageSelect.disabled = true;
@@ -599,8 +590,6 @@ setStatus('No processable pages/images found.');
 extractBtn.disabled = false;
 stopBtn.disabled = true;
 languageSelect.disabled = false;
-qualitySelect.disabled = false;
-saveDigitalPdfBtn.disabled = true;
 return;
 }
 
@@ -623,13 +612,7 @@ currentUnit += 1;
 const preprocessedBlob = await preprocessBlobForOCR(file, qualitySelect.value);
 const ocrResult = await recognizeBlob(preprocessedBlob, worker, currentUnit, totalUnits, file.name);
 const previewUrl = URL.createObjectURL(file);
-addUnitResult({
-label: `File: ${file.name}`,
-text: ocrResult.text,
-previewUrl,
-searchablePdf: ocrResult.pdf,
-digitalLayout: { lines: ocrResult.lines, width: ocrResult.sourceWidth, height: ocrResult.sourceHeight }
-});
+addUnitResult({ label: `File: ${file.name}`, text: ocrResult.text, previewUrl, searchablePdf: ocrResult.pdf });
 setProgress((currentUnit / totalUnits) * 100);
 updateSummary(currentUnit, totalUnits);
 } else if (isPdf(file)) {
@@ -647,13 +630,7 @@ const label = `${file.name} | Page ${pageNumber}/${pdf.numPages}`;
 const preprocessedBlob = await preprocessBlobForOCR(pageBlob, qualitySelect.value);
 const ocrResult = await recognizeBlob(preprocessedBlob, worker, currentUnit, totalUnits, label);
 const previewUrl = URL.createObjectURL(pageBlob);
-addUnitResult({
-label: `File: ${label}`,
-text: ocrResult.text,
-previewUrl,
-searchablePdf: ocrResult.pdf,
-digitalLayout: { lines: ocrResult.lines, width: ocrResult.sourceWidth, height: ocrResult.sourceHeight }
-});
+addUnitResult({ label: `File: ${label}`, text: ocrResult.text, previewUrl, searchablePdf: ocrResult.pdf });
 setProgress((currentUnit / totalUnits) * 100);
 updateSummary(currentUnit, totalUnits);
 }
@@ -680,7 +657,6 @@ qualitySelect.disabled = false;
 extractBtn.disabled = false;
 stopBtn.disabled = true;
 pageSelect.disabled = perUnitResults.length === 0;
-saveDigitalPdfBtn.disabled = perUnitResults.length === 0;
 }
 });
 
@@ -717,52 +693,10 @@ setStatus('Selected result not found.');
 return;
 }
 
-const cleanLabel = sanitizeFilename(picked.label);
+const cleanLabel = picked.label.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '').toLowerCase();
 downloadText(`ocr-output-${cleanLabel || 'item'}`, picked.text.trim());
 setStatus(`Downloaded text for: ${picked.label}`, true);
 });
-
-
-const sanitizeFilename = (label) => label.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '').toLowerCase() || 'item';
-
-const downloadBlob = (blob, filename) => {
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = filename;
-a.click();
-URL.revokeObjectURL(url);
-};
-
-const buildDigitalizedPdf = (picked) => {
-const jspdfApi = window.jspdf?.jsPDF;
-if (!jspdfApi) {
-throw new Error('PDF generator unavailable. Reload once with internet to load jsPDF.');
-}
-const layout = picked.digitalLayout;
-if (!layout?.lines?.length || !layout?.width || !layout?.height) {
-throw new Error('Insufficient OCR layout data for digitalized PDF.');
-}
-const pdf = new jspdfApi({
-orientation: layout.width >= layout.height ? 'landscape' : 'portrait',
-unit: 'pt',
-format: [layout.width, layout.height]
-});
-pdf.setFillColor(255, 255, 255);
-pdf.rect(0, 0, layout.width, layout.height, 'F');
-pdf.setTextColor(20, 20, 20);
-for (const line of layout.lines) {
-const text = (line.text || '').trim();
-const bbox = line.bbox || {};
-if (!text || typeof bbox.x0 !== 'number' || typeof bbox.y0 !== 'number' || typeof bbox.y1 !== 'number') continue;
-const height = Math.max(8, (bbox.y1 - bbox.y0));
-const fontSize = Math.max(8, Math.min(48, height * 0.82));
-pdf.setFont('times', 'normal');
-pdf.setFontSize(fontSize);
-pdf.text(text, bbox.x0, bbox.y0 + height * 0.9, { baseline: 'bottom' });
-}
-return pdf.output('arraybuffer');
-};
 
 saveSinglePdfBtn.addEventListener('click', () => {
 const selectedUnit = Number(pageSelect.value);
@@ -779,36 +713,16 @@ return;
 
 const pdfBytes = picked.searchablePdf;
 const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
-const cleanLabel = sanitizeFilename(picked.label);
-downloadBlob(pdfBlob, `ocr-searchable-${cleanLabel}.pdf`);
+const url = URL.createObjectURL(pdfBlob);
+const a = document.createElement('a');
+const cleanLabel = picked.label.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '').toLowerCase();
+a.href = url;
+a.download = `ocr-searchable-${cleanLabel || 'item'}.pdf`;
+a.click();
+URL.revokeObjectURL(url);
 
 setStatus(`Downloaded searchable PDF for: ${picked.label}`, true);
 });
-
-saveDigitalPdfBtn.addEventListener('click', () => {
-const selectedUnit = Number(pageSelect.value);
-if (!selectedUnit) {
-setStatus('Select a page/image result to download its digitalized PDF.');
-return;
-}
-
-const picked = perUnitResults.find((item) => item.unitId === selectedUnit);
-if (!picked) {
-setStatus('Selected result not found.');
-return;
-}
-
-try {
-const digitalizedPdfBytes = buildDigitalizedPdf(picked);
-const cleanLabel = sanitizeFilename(picked.label);
-const blob = new Blob([digitalizedPdfBytes], { type: 'application/pdf' });
-downloadBlob(blob, `ocr-digitalized-${cleanLabel}.pdf`);
-setStatus(`Downloaded digitalized PDF for: ${picked.label}`, true);
-} catch (error) {
-setStatus(`Digitalized PDF failed: ${error?.message || String(error)}`);
-}
-});
-
 
 if ('serviceWorker' in navigator) {
 window.addEventListener('load', async () => {
