@@ -121,7 +121,7 @@ TSrect-ocr/
 ## 🛠 Future Improvements
 
 - 🔍 Text confidence display
-- 🧾 Export merged searchable PDF for all pages
+- 🧾 Export merged searchable + digitalized PDF for all pages
 - 📊 OCR accuracy metrics
 - 🔎 Search inside extracted text
 - 🌍 More language support
