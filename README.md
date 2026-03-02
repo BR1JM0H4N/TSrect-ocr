@@ -47,7 +47,6 @@ Everything runs directly in your browser 🔐
   - Individual page text
   - Combined full text
   - Searchable PDF for selected page/image (retains original look + text layer)
-  - Digitalized PDF for selected page/image (reconstructs editable text layout)
 - 🛑 Stop OCR mid-process
 - 🌗 Auto light/dark mode
 - 📱 Fully responsive design
