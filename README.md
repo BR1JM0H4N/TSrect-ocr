@@ -3,7 +3,6 @@
 
   # TSrect OCR
 <p align="center">
-
   <!-- Live Demo -->
   <a href="https://br1jm0h4n.github.io/TSrect-ocr/">
     <img src="https://img.shields.io/badge/🚀%20Live%20Demo-Open%20App-success?style=for-the-badge&logo=google-chrome&logoColor=white&labelColor=0f172a" />
