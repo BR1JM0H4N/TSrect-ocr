@@ -2,32 +2,31 @@
   <img src="./head.jpg" alt="TSrect OCR icon" width="120" style="border-radius: 16px;" />
 
   # TSrect OCR
-
-<!-- Animated Typing Header -->
-<p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Segoe+UI&weight=600&size=26&duration=3000&pause=800&color=4CAF50&center=true&vCenter=true&width=600&lines=Elegant+Browser-Based+OCR;Images+%2B+Multi-Page+PDF+Support;100%25+Local+Processing;Privacy+First+Workflow" />
-</p>
-
-<!-- Animated Badges -->
 <p align="center">
 
+  <!-- Live Demo -->
+  <a href="https://br1jm0h4n.github.io/TSrect-ocr/">
+    <img src="https://img.shields.io/badge/🚀%20Live%20Demo-Open%20App-success?style=for-the-badge&logo=google-chrome&logoColor=white&labelColor=0f172a" />
+  </a>
 
-  <!-- Tech Stack -->
-  <img src="https://img.shields.io/badge/JavaScript-Vanilla-yellow?style=for-the-badge&logo=javascript" />
-  <img src="https://img.shields.io/badge/OCR-Tesseract.js-0A66C2?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/PDF-PDF.js-E34F26?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Frontend-HTML5%20%7C%20CSS3-orange?style=for-the-badge&logo=html5" />
+  <!-- Animated Gradient Style -->
+  <img src="https://img.shields.io/badge/OCR-Tesseract.js-4B8BBE?style=for-the-badge&logo=javascript&logoColor=white&labelColor=1e293b" />
+  <img src="https://img.shields.io/badge/PDF-PDF.js-FF3C00?style=for-the-badge&logo=adobeacrobatreader&logoColor=white&labelColor=1e293b" />
+  <img src="https://img.shields.io/badge/Frontend-Vanilla%20JS-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black&labelColor=1e293b" />
 
-  <br/>
+  <!-- Repo Stats -->
+  <img src="https://img.shields.io/github/stars/br1jm0h4n/TSrect-ocr?style=for-the-badge&logo=github&labelColor=1e293b" />
+  <img src="https://img.shields.io/github/forks/br1jm0h4n/TSrect-ocr?style=for-the-badge&logo=github&labelColor=1e293b" />
+  <img src="https://img.shields.io/github/issues/br1jm0h4n/TSrect-ocr?style=for-the-badge&logo=github&labelColor=1e293b" />
+  <img src="https://img.shields.io/github/license/br1jm0h4n/TSrect-ocr?style=for-the-badge&labelColor=1e293b" />
 
   <!-- Features -->
-  <img src="https://img.shields.io/badge/Works%20Offline-Yes-success?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Privacy-Local%20Processing-blueviolet?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Multi--Page%20PDF-Supported-informational?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Language-English%20%2B%20Hindi-9C27B0?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/🌐%20Runs%20In-Browser-blueviolet?style=for-the-badge&labelColor=1e293b" />
+  <img src="https://img.shields.io/badge/🔒%20Privacy-Local%20Processing-success?style=for-the-badge&labelColor=1e293b" />
+  <img src="https://img.shields.io/badge/📄%20Multi--Page-PDF%20Support-orange?style=for-the-badge&labelColor=1e293b" />
+  <img src="https://img.shields.io/badge/🖼️%20Image-OCR%20Supported-blue?style=for-the-badge&labelColor=1e293b" />
 
 </p>
-
   ### ✨ Elegant, browser-based OCR for **Images + PDFs**
 
   <p>
