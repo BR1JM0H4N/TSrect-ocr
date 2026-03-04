@@ -27,6 +27,7 @@
   <img src="https://img.shields.io/badge/🖼️%20Image-OCR%20Supported-blue?style=for-the-badge&labelColor=1e293b" />
 
 </p>
+
   ### ✨ Elegant, browser-based OCR for **Images + PDFs**
 
   <p>
